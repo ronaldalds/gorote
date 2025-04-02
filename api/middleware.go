@@ -1,4 +1,4 @@
-package middlewares
+package main
 
 import (
 	"encoding/json"
@@ -8,11 +8,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ronaldalds/base-go-api/internal/config/envs"
-	"github.com/ronaldalds/base-go-api/internal/utils"
-
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/helmet"
+	"github.com/ronaldalds/gorote-core/core"
 )
+
+type Middleware struct {
+	App *fiber.App
+	// RedisStore *databases.RedisStore
+}
 
 type LogTelemetry struct {
 	Timestamp    string              `json:"timestamp"`
@@ -26,8 +31,31 @@ type LogTelemetry struct {
 	ResponseBody string              `json:"response_body"`
 }
 
+func NewMiddleware(app *fiber.App) *Middleware {
+	return &Middleware{
+		App: app,
+		// RedisStore: databases.DB.RedisStore,
+	}
+}
+
+func (m *Middleware) CorsMiddleware() {
+	m.App.Use(cors.New(cors.Config{
+		AllowOrigins:     "*",
+		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS,PATCH",
+		AllowHeaders:     "Accept,Authorization,Content-Type",
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
+}
+
+func (m *Middleware) SecurityMiddleware() {
+	m.App.Use(helmet.New(helmet.Config{
+		XSSProtection: "1; mode=block",
+	}))
+}
+
 func sendLogToLoki(logData LogTelemetry) {
-	lokiURL := fmt.Sprintf("%v:%v/loki/api/v1/push", envs.Env.LogsUrl, envs.Env.LogsPort)
+	lokiURL := fmt.Sprintf("%v:%v/loki/api/v1/push", Env.LogsUrl, Env.LogsPort)
 	timestamp := fmt.Sprintf("%d", time.Now().UnixNano())
 
 	// Converte os dados do log para JSON
@@ -39,17 +67,17 @@ func sendLogToLoki(logData LogTelemetry) {
 	fmt.Println(string(jsonLog))
 
 	// Monta a estrutura esperada pelo Loki
-	params := utils.HttpRequestParams{
-		Method: utils.POST,
+	params := core.HttpRequestParams{
+		Method: core.POST,
 		URL:    lokiURL,
-		Headers: utils.Headers{
+		Headers: core.Headers{
 			ContentType: "application/json",
 		},
 		Body: map[string]any{
 			"streams": []map[string]any{
 				{
 					"stream": map[string]any{
-						"app": envs.Env.AppName,
+						"app": Env.AppName,
 					},
 					"values": [][]string{
 						{timestamp, string(jsonLog)},
@@ -58,7 +86,7 @@ func sendLogToLoki(logData LogTelemetry) {
 			},
 		},
 	}
-	res, err := utils.SendHttpRequest(params)
+	res, err := core.SendHttpRequest(params)
 	if err != nil {
 		log.Println("Erro ao enviar log para o Loki:", err)
 		return

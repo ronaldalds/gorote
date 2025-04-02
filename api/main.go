@@ -8,11 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ronaldalds/base-go-api/internal/config/envs"
-	"github.com/ronaldalds/base-go-api/internal/config/handlers"
-	"github.com/ronaldalds/base-go-api/internal/config/settings"
-	"github.com/ronaldalds/base-go-api/internal/routes"
-
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -41,23 +36,23 @@ func gracefulShutdown(fiberServer *fiber.App, done chan bool) {
 }
 
 func main() {
-	if err := settings.Config(); err != nil {
+	if err := Config(); err != nil {
 		log.Fatal(err)
 	}
 
 	app := fiber.New(fiber.Config{
-		AppName:      envs.Env.AppName,
-		ServerHeader: envs.Env.AppName,
-		ErrorHandler: handlers.ErrorHandler,
+		AppName:      Env.AppName,
+		ServerHeader: Env.AppName,
+		ErrorHandler: ErrorHandler,
 	})
-	routes := routes.NewRouter(app)
+	routes := New(app)
 	routes.RegisterFiberRoutes()
 
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)
 
 	go func() {
-		err := app.Listen(fmt.Sprintf(":%d", envs.Env.Port))
+		err := app.Listen(fmt.Sprintf(":%d", Env.Port))
 		if err != nil {
 			panic(fmt.Sprintf("http server error: %s", err))
 		}

@@ -1,4 +1,4 @@
-package envs
+package main
 
 import (
 	"fmt"
@@ -30,7 +30,7 @@ type Envs struct {
 	RedisPassword string
 	// JWT
 	JwtSecret        string
-	JwtExpireAcess   time.Duration
+	JwtExpireAccess  time.Duration
 	JwtExpireRefresh time.Duration
 	// SUPER USER
 	SuperName     string
@@ -39,12 +39,11 @@ type Envs struct {
 	SuperEmail    string
 	SuperPhone    string
 	// APP
-	LogsPort           int
-	LogsUrl            string
-	AppName            string
-	TimeUCT            time.Location
-	TimeZone           string
-	Port               int
+	LogsPort int
+	LogsUrl  string
+	AppName  string
+	TimeZone string
+	Port     int
 }
 
 var Env Envs
@@ -72,7 +71,7 @@ func Load() {
 		RedisPassword: getEnv("REDIS_PASSWORD", false),
 		// JWT
 		JwtSecret:        getEnv("JWT_SECRET", true),
-		JwtExpireAcess:   getEnvAsTime("JWT_EXPIRE_ACCESS", false, 5),
+		JwtExpireAccess:  getEnvAsTime("JWT_EXPIRE_ACCESS", false, 5),
 		JwtExpireRefresh: getEnvAsTime("JWT_EXPIRE_REFRESH", false, 10080),
 		// SUPER USER
 		SuperName:     getEnv("SUPER_NAME", false, "Admin"),
@@ -81,35 +80,12 @@ func Load() {
 		SuperEmail:    getEnv("SUPER_EMAIL", false, "ronald.ralds@gmail.com"),
 		SuperPhone:    getEnv("SUPER_PHONE", false, "+558892200365"),
 		// APP
-		LogsPort:           getEnvAsInt("LOG_PORT", true),
-		LogsUrl:            getEnv("LOG_URL", false, "http://localhost"),
-		AppName:            getEnv("APP_NAME", false, "app"),
-		TimeUCT:            getUCT("TIMEZONE", false, "America/Fortaleza"),
-		TimeZone:           getEnv("TIMEZONE", false, "America/Fortaleza"),
-		Port:               getEnvAsInt("PORT", false, 3000),
+		LogsPort: getEnvAsInt("LOG_PORT", false),
+		LogsUrl:  getEnv("LOG_URL", false),
+		AppName:  getEnv("APP_NAME", false, "app"),
+		TimeZone: getEnv("TIMEZONE", false, "America/Fortaleza"),
+		Port:     getEnvAsInt("PORT", false, 3000),
 	}
-}
-
-func getUCT(key string, required bool, defaultValue ...string) time.Location {
-	value := os.Getenv(key)
-
-	if value == "" {
-		if required {
-			panic(fmt.Sprintf("variable %s is required", key))
-		}
-		if len(defaultValue) > 0 {
-			location, err := time.LoadLocation(value)
-			if err != nil {
-				panic(fmt.Sprintf("invalid timezone: %s", err.Error()))
-			}
-			return *location
-		}
-	}
-	location, err := time.LoadLocation(value)
-	if err != nil {
-		panic(fmt.Sprintf("invalid timezone: %s", err.Error()))
-	}
-	return *location
 }
 
 func getEnv(key string, required bool, defaultValue ...string) string {

@@ -1,4 +1,4 @@
-package databases
+package main
 
 import (
 	"context"
@@ -7,12 +7,100 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	_ "github.com/jackc/pgx/v5/stdlib"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
+
+var DB Database
+
+type InitRedis struct {
+	Host     string
+	Port     int
+	Password string
+	DB       int
+}
+
+type InitGorm struct {
+	Host     string
+	User     string
+	Password string
+	Database string
+	Port     int
+	TimeZone string
+	Schema   string
+	Models   []any
+}
+
+type InitMongo struct {
+	Username string
+	Password string
+	Host     string
+	Port     int
+	Database string
+}
+
+type RedisStore struct {
+	Client *redis.Client
+}
+
+type GormStore struct {
+	*gorm.DB
+}
+
+type MongoStore struct {
+	Client   *mongo.Client
+	Database *mongo.Database
+}
+
+type Database struct {
+	GormStore  *GormStore
+	RedisStore *RedisStore
+	MongoStore *MongoStore
+}
+
+func LoadNOSQL() {
+	// Inicializando Mongo
+	dbMongo := &InitMongo{
+		Username: Env.NoSqlUsername,
+		Password: Env.NoSqlPassword,
+		Host:     Env.NoSqlHost,
+		Port:     Env.NoSqlPort,
+		Database: Env.NoSqlDatabase,
+	}
+
+	// Configuração final do banco de dados
+	DB.MongoStore = dbMongo.newMongoStore()
+}
+
+func LoadRedis() {
+	// Inicializando Redis
+	dbRedis := &InitRedis{
+		Host:     Env.RedisHost,
+		Port:     Env.RedisPort,
+		Password: Env.RedisPassword,
+		DB:       Env.RedisDb,
+	}
+	DB.RedisStore = dbRedis.newRedisStore()
+}
+
+func LoadSQL(extraModels ...any) {
+	// Inicializando Gorm
+	dbGorm := &InitGorm{
+		Host:     Env.SqlHost,
+		User:     Env.SqlUsername,
+		Password: Env.SqlPassword,
+		Database: Env.SqlDatabase,
+		Port:     Env.SqlPort,
+		TimeZone: Env.TimeZone,
+		Schema:   Env.SqlSchema,
+		Models:   extraModels,
+	}
+
+	// Configuração final do banco de dados
+	DB.GormStore = dbGorm.newGormStore()
+}
 
 func (m *InitMongo) newMongoStore() *MongoStore {
 	// Cria um contexto com timeout para a conexão
