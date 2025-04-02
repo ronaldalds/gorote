@@ -60,16 +60,16 @@ func Load() {
 		SqlDatabase: getEnv("SQL_DATABASE", true),
 		SqlSchema:   getEnv("SQL_SCHEMA", true),
 		// NOSQL
-		NoSqlUsername: getEnv("NOSQL_USERNAME", true),
-		NoSqlPassword: getEnv("NOSQL_PASSWORD", true),
+		NoSqlUsername: getEnv("NOSQL_USERNAME", false),
+		NoSqlPassword: getEnv("NOSQL_PASSWORD", false),
 		NoSqlHost:     getEnv("NOSQL_HOST", false, "localhost"),
-		NoSqlPort:     getEnvAsInt("NOSQL_PORT", true),
-		NoSqlDatabase: getEnv("NOSQL_DATABASE", true),
+		NoSqlPort:     getEnvAsInt("NOSQL_PORT", false),
+		NoSqlDatabase: getEnv("NOSQL_DATABASE", false),
 		// Redis
-		RedisDb:       getEnvAsInt("REDIS_DB", true),
+		RedisDb:       getEnvAsInt("REDIS_DB", false),
 		RedisHost:     getEnv("REDIS_HOST", false, "localhost"),
-		RedisPort:     getEnvAsInt("REDIS_PORT", true),
-		RedisPassword: getEnv("REDIS_PASSWORD", true),
+		RedisPort:     getEnvAsInt("REDIS_PORT", false),
+		RedisPassword: getEnv("REDIS_PASSWORD", false),
 		// JWT
 		JwtSecret:        getEnv("JWT_SECRET", true),
 		JwtExpireAcess:   getEnvAsTime("JWT_EXPIRE_ACCESS", false, 5),
