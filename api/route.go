@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/implantacao-e-desenvolvimento/go-bo/app/emp"
 	"github.com/ronaldalds/gorote-core/core"
 
 	"github.com/gofiber/fiber/v2"
@@ -11,7 +10,6 @@ type Router struct {
 	App             *fiber.App
 	MiddlewareLocal *Middleware
 	Core            *core.Router
-	LB              *emp.Router
 }
 
 func New(app *fiber.App) *Router {
@@ -33,15 +31,11 @@ func New(app *fiber.App) *Router {
 			SuperPhone: Env.SuperPhone,
 		},
 	}
-	lbConfig := &emp.AppConfig{
-		AppConfig: coreConfig,
-	}
 
 	return &Router{
 		App:             app,
 		MiddlewareLocal: NewMiddleware(app),
 		Core:            core.New(coreConfig),
-		LB:              emp.New(lbConfig),
 	}
 }
 
