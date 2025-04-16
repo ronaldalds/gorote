@@ -9,82 +9,135 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 )
 
-type Envs struct {
-	// SQL
-	SqlUsername string
-	SqlPassword string
-	SqlHost     string
-	SqlPort     int
-	SqlDatabase string
-	SqlSchema   string
-	// NoSQL
-	NoSqlUsername string
-	NoSqlPassword string
-	NoSqlHost     string
-	NoSqlPort     int
-	NoSqlDatabase string
-	// Redis
-	RedisDb       int
-	RedisHost     string
-	RedisPort     int
-	RedisPassword string
-	// JWT
-	JwtSecret        string
-	JwtExpireAccess  time.Duration
-	JwtExpireRefresh time.Duration
-	// SUPER USER
-	SuperName     string
-	SuperUsername string
-	SuperPass     string
-	SuperEmail    string
-	SuperPhone    string
-	// APP
-	LogsPort int
-	LogsUrl  string
-	AppName  string
+type NoSQL struct {
+	Username string
+	Password string
+	Host     string
+	Port     int
+	Database string
+}
+
+type Redis struct {
+	Host     string
+	Port     int
+	Password string
+	DB       int
+}
+
+type SQL struct {
+	Username string
+	Password string
+	Host     string
+	Port     int
+	Database string
+	Schema   string
+}
+
+type Super struct {
+	Name     string
+	Username string
+	Password string
+	Email    string
+	Phone    string
+}
+
+type JWT struct {
+	Secret        string
+	ExpireAccess  time.Duration
+	ExpireRefresh time.Duration
+}
+
+type Log struct {
+	Url  string
+	Port int
+}
+
+type APP struct {
+	Name     string
 	TimeZone string
 	Port     int
+}
+
+type Envs struct {
+	Sql   SQL
+	NoSql *NoSQL
+	Redis *Redis
+	Super Super
+	Jwt   JWT
+	Logs  *Log
+	App   APP
 }
 
 var Env Envs
 
 // Load reads and validates environment variables
 func Load() {
+	app := APP{
+		Name:     getEnv("APP_NAME", true),
+		TimeZone: getEnv("APP_TIMEZONE", false, "America/Sao_Paulo"),
+		Port:     getEnvAsInt("APP_PORT", true),
+	}
+	sql := SQL{
+		Username: getEnv("SQL_USERNAME", true),
+		Password: getEnv("SQL_PASSWORD", true),
+		Host:     getEnv("SQL_HOST", false, "localhost"),
+		Port:     getEnvAsInt("SQL_PORT", true),
+		Database: getEnv("SQL_DATABASE", true),
+		Schema:   getEnv("SQL_SCHEMA", true),
+	}
+	jwt := JWT{
+		Secret:        getEnv("JWT_SECRET", true),
+		ExpireAccess:  getEnvAsTime("JWT_EXPIRE_ACCESS", false, 5),
+		ExpireRefresh: getEnvAsTime("JWT_EXPIRE_REFRESH", false, 10080),
+	}
+	super := Super{
+		Name:     getEnv("SUPER_NAME", false, "Admin"),
+		Username: getEnv("SUPER_USERNAME", false, "admin"),
+		Password: getEnv("SUPER_PASS", false, "admin"),
+		Email:    getEnv("SUPER_EMAIL", false, "ronald.ralds@gmail.com"),
+		Phone:    getEnv("SUPER_PHONE", false, "+558892200365"),
+	}
+
+	noSql := &NoSQL{
+		Username: getEnv("NOSQL_USERNAME", false),
+		Password: getEnv("NOSQL_PASSWORD", false),
+		Host:     getEnv("NOSQL_HOST", false, "localhost"),
+		Port:     getEnvAsInt("NOSQL_PORT", false),
+		Database: getEnv("NOSQL_DATABASE", false),
+	}
+	if noSql.Username == "" || noSql.Password == "" || noSql.Host == "" || noSql.Port == 0 || noSql.Database == "" {
+		fmt.Println("NoSQL disabled")
+		noSql = nil
+	}
+
+	redis := &Redis{
+		Host:     getEnv("REDIS_HOST", false, "localhost"),
+		Port:     getEnvAsInt("REDIS_PORT", false),
+		Password: getEnv("REDIS_PASSWORD", false),
+		DB:       getEnvAsInt("REDIS_DB", false),
+	}
+	if redis.Host == "" || redis.Port == 0 || redis.Password == "" || redis.DB == 0 {
+		fmt.Println("Redis disabled")
+		redis = nil
+	}
+
+	log := &Log{
+		Url:  getEnv("LOG_URL", false),
+		Port: getEnvAsInt("LOG_PORT", false),
+	}
+	if log.Url == "" || log.Port == 0 {
+		fmt.Println("Logs disabled")
+		log = nil
+	}
+
 	Env = Envs{
-		// SQL
-		SqlUsername: getEnv("SQL_USERNAME", true),
-		SqlPassword: getEnv("SQL_PASSWORD", true),
-		SqlHost:     getEnv("SQL_HOST", false, "localhost"),
-		SqlPort:     getEnvAsInt("SQL_PORT", true),
-		SqlDatabase: getEnv("SQL_DATABASE", true),
-		SqlSchema:   getEnv("SQL_SCHEMA", true),
-		// NOSQL
-		NoSqlUsername: getEnv("NOSQL_USERNAME", false),
-		NoSqlPassword: getEnv("NOSQL_PASSWORD", false),
-		NoSqlHost:     getEnv("NOSQL_HOST", false, "localhost"),
-		NoSqlPort:     getEnvAsInt("NOSQL_PORT", false),
-		NoSqlDatabase: getEnv("NOSQL_DATABASE", false),
-		// Redis
-		RedisDb:       getEnvAsInt("REDIS_DB", false),
-		RedisHost:     getEnv("REDIS_HOST", false, "localhost"),
-		RedisPort:     getEnvAsInt("REDIS_PORT", false),
-		RedisPassword: getEnv("REDIS_PASSWORD", false),
-		// JWT
-		JwtSecret:        getEnv("JWT_SECRET", true),
-		JwtExpireAccess:  getEnvAsTime("JWT_EXPIRE_ACCESS", false, 5),
-		JwtExpireRefresh: getEnvAsTime("JWT_EXPIRE_REFRESH", false, 10080),
-		// SUPER USER
-		SuperName:     getEnv("SUPER_NAME", false, "Admin"),
-		SuperUsername: getEnv("SUPER_USERNAME", false, "admin"),
-		SuperPass:     getEnv("SUPER_PASS", false, "admin"),
-		SuperEmail:    getEnv("SUPER_EMAIL", false, "ronald.ralds@gmail.com"),
-		SuperPhone:    getEnv("SUPER_PHONE", false, "+558892200365"),
-		// APP
-		LogsPort: getEnvAsInt("LOG_PORT", false),
-		LogsUrl:  getEnv("LOG_URL", false),
-		AppName:  getEnv("APP_NAME", false, "app"),
-		TimeZone: getEnv("TIMEZONE", false, "America/Fortaleza"),
-		Port:     getEnvAsInt("PORT", false, 3000),
+		Sql:   sql,
+		NoSql: noSql,
+		Redis: redis,
+		Super: super,
+		Jwt:   jwt,
+		Logs:  log,
+		App:   app,
 	}
 }
 

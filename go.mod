@@ -6,7 +6,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gofiber/fiber/v2 v2.52.6
 	github.com/joho/godotenv v1.5.1
-	github.com/ronaldalds/gorote-core v0.1.9
+	github.com/ronaldalds/gorote-core v1.0.4
 	go.mongodb.org/mongo-driver v1.17.3
 	gorm.io/driver/postgres v1.5.11
 	gorm.io/gorm v1.25.12

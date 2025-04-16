@@ -13,8 +13,6 @@ import (
 	"gorm.io/gorm"
 )
 
-var DB Database
-
 type InitRedis struct {
 	Host     string
 	Port     int
@@ -41,68 +39,12 @@ type InitMongo struct {
 	Database string
 }
 
-type RedisStore struct {
-	Client *redis.Client
-}
-
-type GormStore struct {
-	*gorm.DB
-}
-
 type MongoStore struct {
 	Client   *mongo.Client
 	Database *mongo.Database
 }
 
-type Database struct {
-	GormStore  *GormStore
-	RedisStore *RedisStore
-	MongoStore *MongoStore
-}
-
-func LoadNOSQL() {
-	// Inicializando Mongo
-	dbMongo := &InitMongo{
-		Username: Env.NoSqlUsername,
-		Password: Env.NoSqlPassword,
-		Host:     Env.NoSqlHost,
-		Port:     Env.NoSqlPort,
-		Database: Env.NoSqlDatabase,
-	}
-
-	// Configuração final do banco de dados
-	DB.MongoStore = dbMongo.newMongoStore()
-}
-
-func LoadRedis() {
-	// Inicializando Redis
-	dbRedis := &InitRedis{
-		Host:     Env.RedisHost,
-		Port:     Env.RedisPort,
-		Password: Env.RedisPassword,
-		DB:       Env.RedisDb,
-	}
-	DB.RedisStore = dbRedis.newRedisStore()
-}
-
-func LoadSQL(extraModels ...any) {
-	// Inicializando Gorm
-	dbGorm := &InitGorm{
-		Host:     Env.SqlHost,
-		User:     Env.SqlUsername,
-		Password: Env.SqlPassword,
-		Database: Env.SqlDatabase,
-		Port:     Env.SqlPort,
-		TimeZone: Env.TimeZone,
-		Schema:   Env.SqlSchema,
-		Models:   extraModels,
-	}
-
-	// Configuração final do banco de dados
-	DB.GormStore = dbGorm.newGormStore()
-}
-
-func (m *InitMongo) newMongoStore() *MongoStore {
+func newMongoStore(m *InitMongo) *MongoStore {
 	// Cria um contexto com timeout para a conexão
 	uri := fmt.Sprintf("mongodb://%s:%s@%s:%d/%s?authSource=admin&ssl=false",
 		m.Username,
@@ -131,7 +73,7 @@ func (m *InitMongo) newMongoStore() *MongoStore {
 	}
 }
 
-func (r *InitRedis) newRedisStore() *RedisStore {
+func newRedisStore(r *InitRedis) *redis.Client {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -149,16 +91,16 @@ func (r *InitRedis) newRedisStore() *RedisStore {
 	}
 
 	fmt.Println("Connected to Redis")
-	return &RedisStore{client}
+	return client
 }
 
-func (g *InitGorm) newGormStore() *GormStore {
+func newGormStore(g *InitGorm) *gorm.DB {
 	// Cria um contexto com timeout de 10 segundos
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	// Cria o Data Source Name (DSN)
-	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=%s search_path=%s",
+	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=%s search_path=%s client_encoding=UTF8",
 		g.Host,
 		g.Port,
 		g.User,
@@ -189,7 +131,7 @@ func (g *InitGorm) newGormStore() *GormStore {
 	// Cria o schema, caso não exista
 	_, err = sqlDB.ExecContext(ctx, fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s;", g.Schema))
 	if err != nil {
-		log.Fatal("failed to create schema:", err)
+		log.Println("failed to create schema:", err)
 	}
 
 	if len(g.Models) > 0 {
@@ -198,13 +140,13 @@ func (g *InitGorm) newGormStore() *GormStore {
 			g.Models...,
 		)
 		if err_db != nil {
-			log.Fatal("failed to auto migrate:", err_db)
+			log.Println("failed to auto migrate:", err_db)
 		}
 	}
 
 	fmt.Println("Connected to Gorm and schema is set up.")
 
 	// Retorna o GormStore
-	return &GormStore{db}
+	return db
 
 }

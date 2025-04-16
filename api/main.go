@@ -36,23 +36,27 @@ func gracefulShutdown(fiberServer *fiber.App, done chan bool) {
 }
 
 func main() {
-	if err := Config(); err != nil {
-		log.Fatal(err)
-	}
+	Load()
 
 	app := fiber.New(fiber.Config{
-		AppName:      Env.AppName,
-		ServerHeader: Env.AppName,
+		AppName:      Env.App.Name,
+		ServerHeader: Env.App.Name,
 		ErrorHandler: ErrorHandler,
 	})
-	routes := New(app)
+	routes := Config(app)
+	if routes == nil {
+		log.Fatal("Error on load routes")
+	}
+	if err := Ready(); err != nil {
+		log.Fatalf("error on ready: %s", err.Error())
+	}
 	routes.RegisterFiberRoutes()
 
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)
 
 	go func() {
-		err := app.Listen(fmt.Sprintf(":%d", Env.Port))
+		err := app.Listen(fmt.Sprintf(":%d", Env.App.Port))
 		if err != nil {
 			panic(fmt.Sprintf("http server error: %s", err))
 		}

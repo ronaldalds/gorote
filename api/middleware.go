@@ -55,7 +55,7 @@ func (m *Middleware) SecurityMiddleware() {
 }
 
 func sendLogToLoki(logData LogTelemetry) {
-	lokiURL := fmt.Sprintf("%v:%v/loki/api/v1/push", Env.LogsUrl, Env.LogsPort)
+	lokiURL := fmt.Sprintf("%v:%v/loki/api/v1/push", Env.Logs.Url, Env.Logs.Port)
 	timestamp := fmt.Sprintf("%d", time.Now().UnixNano())
 
 	// Converte os dados do log para JSON
@@ -77,7 +77,7 @@ func sendLogToLoki(logData LogTelemetry) {
 			"streams": []map[string]any{
 				{
 					"stream": map[string]any{
-						"app": Env.AppName,
+						"app": Env.App.Name,
 					},
 					"values": [][]string{
 						{timestamp, string(jsonLog)},
