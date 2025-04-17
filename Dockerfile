@@ -28,8 +28,5 @@ COPY --from=builder /app/main .
 # Copiar outros arquivos necessários (por exemplo, .env)
 COPY .env .
 
-# Definir a porta que o serviço irá expor
-EXPOSE 3000
-
 # Comando para iniciar o serviço
 CMD ["./main"]
