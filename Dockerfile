@@ -11,7 +11,7 @@ COPY . .
 RUN go mod tidy
 
 # Compilar o binário
-RUN go build -o main ./cmd/api
+RUN go build -o main ./api
 
 # Etapa 2: Criar a imagem final
 FROM debian:bookworm-slim

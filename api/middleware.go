@@ -16,7 +16,6 @@ import (
 
 type Middleware struct {
 	App *fiber.App
-	// RedisStore *databases.RedisStore
 }
 
 type LogTelemetry struct {
@@ -34,7 +33,6 @@ type LogTelemetry struct {
 func NewMiddleware(app *fiber.App) *Middleware {
 	return &Middleware{
 		App: app,
-		// RedisStore: databases.DB.RedisStore,
 	}
 }
 
