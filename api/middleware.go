@@ -11,7 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/helmet"
-	"github.com/ronaldalds/gorote-core/core"
+	"github.com/ronaldalds/gorote-core-rsa/core"
 )
 
 type Middleware struct {

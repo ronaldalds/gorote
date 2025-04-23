@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/gofiber/fiber/v2"
 
-	"github.com/ronaldalds/gorote-core/core"
+	"github.com/ronaldalds/gorote-core-rsa/core"
 )
 
 type Router struct {
@@ -17,7 +17,7 @@ func Ready() error {
 }
 
 func Config(app *fiber.App) *Router {
-	coreGorm := &InitGorm{
+	coreGorm := &core.InitGorm{
 		Host:     Env.Sql.Host,
 		User:     Env.Sql.Username,
 		Password: Env.Sql.Password,
@@ -26,10 +26,7 @@ func Config(app *fiber.App) *Router {
 		Schema:   Env.Sql.Schema,
 		TimeZone: Env.App.TimeZone,
 	}
-	jwt := core.AppJwt{
-		AppName:          Env.App.Name,
-		TimeZone:         Env.App.TimeZone,
-		JwtSecret:        Env.Jwt.Secret,
+	jwt := &core.AppJwt{
 		JwtExpireAccess:  Env.Jwt.ExpireAccess,
 		JwtExpireRefresh: Env.Jwt.ExpireRefresh,
 	}
@@ -42,10 +39,12 @@ func Config(app *fiber.App) *Router {
 	}
 
 	coreConfig := &core.AppConfig{
-		App:       app,
-		GormStore: newGormStore(coreGorm),
-		Jwt:       jwt,
-		Super:     super,
+		App:         app,
+		AppName:     Env.App.Name,
+		AppTimeZone: Env.App.TimeZone,
+		CoreGorm:    core.NewGormStore(coreGorm),
+		Jwt:         jwt,
+		Super:       super,
 	}
 	return &Router{
 		App:             app,

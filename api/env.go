@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"strconv"
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/ronaldalds/gorote-core-rsa/core"
 )
 
 type NoSQL struct {
@@ -42,7 +41,6 @@ type Super struct {
 }
 
 type JWT struct {
-	Secret        string
 	ExpireAccess  time.Duration
 	ExpireRefresh time.Duration
 }
@@ -59,13 +57,13 @@ type APP struct {
 }
 
 type Envs struct {
+	App   APP
 	Sql   SQL
 	NoSql *NoSQL
 	Redis *Redis
 	Super Super
 	Jwt   JWT
 	Logs  *Log
-	App   APP
 }
 
 var Env Envs
@@ -73,37 +71,36 @@ var Env Envs
 // Load reads and validates environment variables
 func Load() {
 	app := APP{
-		Name:     getEnv("APP_NAME", true),
-		TimeZone: getEnv("APP_TIMEZONE", false, "America/Sao_Paulo"),
-		Port:     getEnvAsInt("APP_PORT", true),
+		Name:     core.GetEnv("APP_NAME", true),
+		TimeZone: core.GetEnv("APP_TIMEZONE", false, "America/Sao_Paulo"),
+		Port:     core.GetEnvAsInt("APP_PORT", true),
 	}
 	sql := SQL{
-		Username: getEnv("SQL_USERNAME", true),
-		Password: getEnv("SQL_PASSWORD", true),
-		Host:     getEnv("SQL_HOST", false, "localhost"),
-		Port:     getEnvAsInt("SQL_PORT", true),
-		Database: getEnv("SQL_DATABASE", true),
-		Schema:   getEnv("SQL_SCHEMA", true),
+		Username: core.GetEnv("SQL_USERNAME", true),
+		Password: core.GetEnv("SQL_PASSWORD", true),
+		Host:     core.GetEnv("SQL_HOST", true),
+		Port:     core.GetEnvAsInt("SQL_PORT", true),
+		Database: core.GetEnv("SQL_DATABASE", true),
+		Schema:   core.GetEnv("SQL_SCHEMA", true),
 	}
 	jwt := JWT{
-		Secret:        getEnv("JWT_SECRET", true),
-		ExpireAccess:  getEnvAsTime("JWT_EXPIRE_ACCESS", false, 5),
-		ExpireRefresh: getEnvAsTime("JWT_EXPIRE_REFRESH", false, 10080),
+		ExpireAccess:  core.GetEnvAsTime("JWT_EXPIRE_ACCESS", false, 5),
+		ExpireRefresh: core.GetEnvAsTime("JWT_EXPIRE_REFRESH", false, 10080),
 	}
 	super := Super{
-		Name:     getEnv("SUPER_NAME", false, "Admin"),
-		Username: getEnv("SUPER_USERNAME", false, "admin"),
-		Password: getEnv("SUPER_PASS", false, "admin"),
-		Email:    getEnv("SUPER_EMAIL", false, "ronald.ralds@gmail.com"),
-		Phone:    getEnv("SUPER_PHONE", false, "+558892200365"),
+		Name:     core.GetEnv("SUPER_NAME", false, "Admin"),
+		Username: core.GetEnv("SUPER_USERNAME", false, "admin"),
+		Password: core.GetEnv("SUPER_PASS", false, "admin"),
+		Email:    core.GetEnv("SUPER_EMAIL", false, "ronald.ralds@gmail.com"),
+		Phone:    core.GetEnv("SUPER_PHONE", false, "+558892200365"),
 	}
 
 	noSql := &NoSQL{
-		Username: getEnv("NOSQL_USERNAME", false),
-		Password: getEnv("NOSQL_PASSWORD", false),
-		Host:     getEnv("NOSQL_HOST", false, "localhost"),
-		Port:     getEnvAsInt("NOSQL_PORT", false),
-		Database: getEnv("NOSQL_DATABASE", false),
+		Username: core.GetEnv("NOSQL_USERNAME", false),
+		Password: core.GetEnv("NOSQL_PASSWORD", false),
+		Host:     core.GetEnv("NOSQL_HOST", true),
+		Port:     core.GetEnvAsInt("NOSQL_PORT", false),
+		Database: core.GetEnv("NOSQL_DATABASE", false),
 	}
 	if noSql.Username == "" || noSql.Password == "" || noSql.Host == "" || noSql.Port == 0 || noSql.Database == "" {
 		fmt.Println("NoSQL disabled")
@@ -111,10 +108,10 @@ func Load() {
 	}
 
 	redis := &Redis{
-		Host:     getEnv("REDIS_HOST", false, "localhost"),
-		Port:     getEnvAsInt("REDIS_PORT", false),
-		Password: getEnv("REDIS_PASSWORD", false),
-		DB:       getEnvAsInt("REDIS_DB", false),
+		Host:     core.GetEnv("REDIS_HOST", false, "localhost"),
+		Port:     core.GetEnvAsInt("REDIS_PORT", false),
+		Password: core.GetEnv("REDIS_PASSWORD", false),
+		DB:       core.GetEnvAsInt("REDIS_DB", false),
 	}
 	if redis.Host == "" || redis.Port == 0 || redis.Password == "" || redis.DB == 0 {
 		fmt.Println("Redis disabled")
@@ -122,8 +119,8 @@ func Load() {
 	}
 
 	log := &Log{
-		Url:  getEnv("LOG_URL", false),
-		Port: getEnvAsInt("LOG_PORT", false),
+		Url:  core.GetEnv("LOG_URL", false),
+		Port: core.GetEnvAsInt("LOG_PORT", false),
 	}
 	if log.Url == "" || log.Port == 0 {
 		fmt.Println("Logs disabled")
@@ -131,67 +128,12 @@ func Load() {
 	}
 
 	Env = Envs{
+		App:   app,
 		Sql:   sql,
 		NoSql: noSql,
 		Redis: redis,
 		Super: super,
 		Jwt:   jwt,
 		Logs:  log,
-		App:   app,
 	}
-}
-
-func getEnv(key string, required bool, defaultValue ...string) string {
-	value := os.Getenv(key)
-
-	if value == "" {
-		if required {
-			panic(fmt.Sprintf("variable %s is required", key))
-		}
-		if len(defaultValue) > 0 {
-			return defaultValue[0]
-		}
-		return ""
-	}
-	return value
-}
-
-func getEnvAsInt(key string, required bool, defaultValue ...int) int {
-	valueStr := os.Getenv(key)
-
-	if valueStr == "" {
-		if required {
-			panic(fmt.Sprintf("variable %s is required", key))
-		}
-		if len(defaultValue) > 0 {
-			return defaultValue[0]
-		}
-		return 0
-	}
-
-	value, err := strconv.Atoi(valueStr)
-	if err != nil {
-		panic(fmt.Sprintf("failed to convert %s to integer: %v", key, err))
-	}
-	return value
-}
-
-func getEnvAsTime(key string, required bool, defaultValue ...int) time.Duration {
-	valueStr := os.Getenv(key)
-
-	if valueStr == "" {
-		if required {
-			panic(fmt.Sprintf("variable %s is required", key))
-		}
-		if len(defaultValue) > 0 {
-			return time.Duration(defaultValue[0]) * time.Minute
-		}
-		return 0
-	}
-
-	value, err := strconv.Atoi(valueStr)
-	if err != nil {
-		panic(fmt.Sprintf("failed to convert %s to integer: %v", key, err))
-	}
-	return time.Duration(value) * time.Minute
 }
