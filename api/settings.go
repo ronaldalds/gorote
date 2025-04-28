@@ -12,10 +12,6 @@ type Router struct {
 	Core            *core.Router
 }
 
-func Ready() error {
-	return nil
-}
-
 func Config(app *fiber.App) *Router {
 	coreGorm := &core.InitGorm{
 		Host:     Env.Sql.Host,
