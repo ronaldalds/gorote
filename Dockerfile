@@ -27,6 +27,7 @@ COPY --from=builder /app/main .
 
 # Copiar outros arquivos necessários (por exemplo, .env)
 COPY .env .
+COPY *.pem .
 
 # Comando para iniciar o serviço
 CMD ["./main"]
