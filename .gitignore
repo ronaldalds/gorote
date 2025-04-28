@@ -26,3 +26,12 @@ go.work.sum
 
 # http file
 *.http
+
+# rsa file
+*.pem
+*.pub
+*.crt
+*.key
+*.csr
+*.crl
+*.pem
