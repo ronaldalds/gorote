@@ -47,9 +47,6 @@ func main() {
 	if routes == nil {
 		log.Fatal("Error on load routes")
 	}
-	if err := Ready(); err != nil {
-		log.Fatalf("error on ready: %s", err.Error())
-	}
 	routes.RegisterFiberRoutes()
 
 	// Create a done channel to signal when the shutdown is complete
